@@ -9,7 +9,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 
-public final class SkillScript extends JavaPlugin {
+public class SkillScript extends JavaPlugin {
 
     private ScriptManager scriptManager;
     private ActionRegistry actionRegistry; // ActionRegistry 멤버 변수 추가

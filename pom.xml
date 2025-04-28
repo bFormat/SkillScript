@@ -32,6 +32,32 @@
         <scope>provided</scope>
     </dependency>
 
+    <dependency>
+        <groupId>org.mariuszgromada.math</groupId>
+        <artifactId>MathParser.org-mXparser</artifactId>
+        <version>5.0.7</version> <!-- 최신 버전 확인 권장 -->
+    </dependency>
+
+
+    <dependency>
+        <groupId>org.mockbukkit.mockbukkit</groupId>
+        <artifactId>mockbukkit-v1.21</artifactId> <!-- 사용하는 서버 버전에 맞춰 선택 (예: v1.18, v1.20 등) -->
+        <version>4.46.2</version> <!-- 최신 버전 확인 -->
+        <scope>test</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.junit.jupiter</groupId>
+        <artifactId>junit-jupiter-api</artifactId>
+        <version>5.9.2</version> <!-- JUnit 5 -->
+        <scope>test</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.junit.jupiter</groupId>
+        <artifactId>junit-jupiter-engine</artifactId>
+        <version>5.9.2</version>
+        <scope>test</scope>
+    </dependency>
+
     <!-- SnakeYAML (Bukkit/Spigot/Paper에 이미 포함되어 있지만 명시적으로 추가 가능) -->
     <!-- <dependency>
         <groupId>org.yaml</groupId>
