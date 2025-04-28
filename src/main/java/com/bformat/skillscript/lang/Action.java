@@ -14,6 +14,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID; // For UUID parsing
+import java.util.function.Function; // Function 임포트 추가
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.regex.Matcher;    // Matcher 임포트 추가
+import java.util.regex.Pattern;   // Pattern 임포트 추가
 
 /**
  * Functional interface representing a single executable action within a SkillScript.
@@ -350,6 +355,119 @@ public interface Action {
             }
         }
         return Optional.empty();
+    }
+
+    /**
+     * 문자열 내의 SkillScript 변수 및 셀렉터 플레이스홀더를 실제 값으로 치환합니다.
+     * 플레이스홀더 형식: {var:변수명} 또는 {sel:셀렉터.속성}
+     * 예: "Player {var:playerName} has {sel:@Caster.Health} HP."
+     *
+     * @param inputString 처리할 원본 문자열.
+     * @param context     변수 및 셀렉터 값 해석에 사용될 ExecutionContext.
+     * @param logger      오류 로깅을 위한 Logger (선택적).
+     * @param pluginPrefix 로깅 시 사용할 플러그인 접두사 (선택적).
+     * @return 플레이스홀더가 실제 값으로 치환된 문자열. 값을 찾을 수 없으면 플레이스홀더가 그대로 남거나 빈 문자열로 대체될 수 있음 (정책 결정 필요).
+     */
+    default String processPlaceholders(String inputString, ExecutionContext context, Logger logger, String pluginPrefix) {
+        if (inputString == null || inputString.isEmpty() || !inputString.contains("{")) {
+            return inputString; // 처리할 플레이스홀더 없음
+        }
+
+        // 플레이스홀더 패턴: {type:identifier}
+        // type: var 또는 sel
+        // identifier: 변수명 또는 셀렉터 문자열 (공백 허용 안 함)
+        final Pattern placeholderPattern = Pattern.compile("\\{(var|sel):([^\\s}]+)\\}");
+        Matcher matcher = placeholderPattern.matcher(inputString);
+        StringBuffer sb = new StringBuffer(); // 결과 문자열을 효율적으로 빌드
+
+        while (matcher.find()) {
+            String type = matcher.group(1); // "var" 또는 "sel"
+            String identifier = matcher.group(2); // 변수명 또는 셀렉터
+            String replacement = matcher.group(0); // 기본값: 원래 플레이스홀더 문자열
+
+            try {
+                if ("var".equals(type)) {
+                    // 변수 값 가져오기
+                    Object varValue = context.getVariable(identifier);
+                    if (varValue != null) {
+                        // --- 변수 타입별 포맷팅 추가 ---
+                        if (varValue instanceof Location) {
+                            Location loc = (Location) varValue;
+                            replacement = String.format("%s, %.1f, %.1f, %.1f",
+                                    loc.getWorld() != null ? loc.getWorld().getName() : "unknown",
+                                    loc.getX(), loc.getY(), loc.getZ());
+                        } else if (varValue instanceof Vector) {
+                            Vector vec = (Vector) varValue;
+                            replacement = String.format("%.2f, %.2f, %.2f", vec.getX(), vec.getY(), vec.getZ());
+                        } else if (varValue instanceof Double) { // Double 타입 포맷팅 (기존 sel 처리 로직과 유사하게)
+                            double val = (Double) varValue;
+                            if (val == Math.floor(val) && !Double.isInfinite(val)) {
+                                replacement = String.valueOf((long) val); // 정수면 .0 제거
+                            } else {
+                                replacement = String.format("%.2f", val); // 기본 소수점 2자리
+                            }
+                        } else {
+                            // 그 외 타입은 기본 toString() 사용
+                            replacement = String.valueOf(varValue);
+                        }
+                        // ------------------------------
+                    } else {
+                        if (logger != null) logger.warning(pluginPrefix + "Placeholder processing: Variable not found: " + identifier);
+                    }
+                } else if ("sel".equals(type)) {
+                    // --- 셀렉터 처리 부분은 변경 없음 ---
+                    Optional<Double> numericValue = context.resolveNumericValue(identifier);
+                    if (numericValue.isPresent()) {
+                        // ... (기존 숫자 포맷팅) ...
+                        double val = numericValue.get();
+                        if (val == Math.floor(val) && !Double.isInfinite(val)) {
+                            replacement = String.valueOf((long) val);
+                        } else {
+                            replacement = String.format("%.2f", val);
+                        }
+                    } else {
+                        Optional<Entity> entityValue = context.resolveEntity(identifier);
+                        if (entityValue.isPresent()) {
+                            replacement = entityValue.get().getName();
+                        } else {
+                            Optional<Location> locationValue = context.resolveLocation(identifier);
+                            if (locationValue.isPresent()) {
+                                // Location 포맷팅 적용
+                                Location loc = locationValue.get();
+                                replacement = String.format("%s, %.1f, %.1f, %.1f",
+                                        loc.getWorld() != null ? loc.getWorld().getName() : "unknown",
+                                        loc.getX(), loc.getY(), loc.getZ());
+                            } else {
+                                Optional<Vector> vectorValue = context.resolveVector(identifier);
+                                if(vectorValue.isPresent()) {
+                                    // Vector 포맷팅 적용
+                                    Vector vec = vectorValue.get();
+                                    replacement = String.format("%.2f, %.2f, %.2f", vec.getX(), vec.getY(), vec.getZ());
+                                } else {
+                                    // 셀렉터 못 찾음 (기존 로직)
+                                    if (logger != null) logger.warning(pluginPrefix + "Placeholder processing: Selector could not be resolved: " + identifier);
+                                }
+                            }
+                        }
+                    }
+                    // ---------------------------------
+                }
+            } catch (Exception e) {
+                if (logger != null) logger.log(Level.SEVERE, pluginPrefix + "Error processing placeholder: " + matcher.group(0), e);
+                // 오류 발생 시 플레이스홀더 유지
+            }
+
+            // 찾은 값으로 치환 (정규식 특수문자 이스케이프 처리)
+            matcher.appendReplacement(sb, Matcher.quoteReplacement(replacement));
+        }
+        matcher.appendTail(sb); // 나머지 문자열 추가
+
+        return sb.toString();
+    }
+
+    // Logger, pluginPrefix 없이 간단히 호출하는 오버로드 메소드
+    default String processPlaceholders(String inputString, ExecutionContext context) {
+        return processPlaceholders(inputString, context, null, "");
     }
 
 

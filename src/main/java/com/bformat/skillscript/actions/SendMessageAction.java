@@ -16,31 +16,34 @@ public class SendMessageAction implements Action {
 
     @Override
     public void execute(ExecutionContext context, ExecutionState state, Map<String, Object> params) {
-        final Logger logger = context.getCaster().getServer().getLogger(); // Get logger from context/server
+        final Logger logger = context.getCaster().getServer().getLogger();
         final String pluginPrefix = "[SkillScript Action] ";
 
         // --- 메시지 파싱 (필수) ---
         Optional<String> messageOpt = getStringParameter(params, "message");
         if (messageOpt.isEmpty()) {
             logger.warning(pluginPrefix + "SendMessageAction: Missing 'message' parameter.");
-            return; // State modification not needed
+            return;
         }
-        String message = messageOpt.get();
+        String rawMessage = messageOpt.get(); // 원본 메시지 문자열
 
         // --- 대상 결정 ---
-        CommandSender target = resolveTarget(context, params.get("target")); // Use helper method
+        CommandSender target = resolveTarget(context, params.get("target")); // 기존 헬퍼 사용
 
         // --- 메시지 전송 ---
         if (target != null) {
-            // Apply color codes
-            String formattedMessage = ChatColor.translateAlternateColorCodes('&', message);
+            // *** 플레이스홀더 처리 ***
+            String processedMessage = processPlaceholders(rawMessage, context, logger, pluginPrefix);
+
+            // 색상 코드 적용
+            String formattedMessage = ChatColor.translateAlternateColorCodes('&', processedMessage);
+
+            // 최종 메시지 전송
             target.sendMessage(formattedMessage);
-            logger.fine(pluginPrefix + "Sent message to " + target.getName() + ": " + formattedMessage);
+            logger.fine(pluginPrefix + "Sent message to " + target.getName() + ": " + formattedMessage + " (Raw: " + rawMessage + ")");
         } else {
             logger.warning(pluginPrefix + "SendMessageAction: Could not determine a valid target to send the message to.");
         }
-
-        // This action completes immediately. No state modification needed.
     }
 
 
