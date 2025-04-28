@@ -1,0 +1,18 @@
+name: SkillScript
+version: ${project.version}
+main: com.bformat.skillscript.SkillScript
+api-version: '1.21.5'
+author: bFormat
+description: Allows creating complex spell effects using scripts.
+
+commands:
+  cast:
+    description: Casts a spell using a script.
+    usage: /<command> <scriptName> [args...]
+    permission: spellscript.cast # 명령어 사용 권한 노드 (선택적)
+    aliases: [sscast]
+  skillscript: # 플러그인 관리 명령어 (예: 리로드)
+    description: Manages the SpellScript plugin.
+    usage: /<command> [reload]
+    permission: spellscript.admin
+    aliases: [ss]

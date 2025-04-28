@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.bformat</groupId>
+    <artifactId>SkillScript</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <repositories>
+    <!-- Paper API Repository -->
+    <repository>
+        <id>papermc-repo</id>
+        <url>https://repo.papermc.io/repository/maven-public/</url>
+    </repository>
+    </repositories>
+
+    <dependencies>
+    <!-- Paper API Dependency -->
+    <dependency>
+        <groupId>io.papermc.paper</groupId>
+        <artifactId>paper-api</artifactId>
+        <!-- 사용하는 마인크래프트 버전에 맞게 변경 (예: 1.20.4-R0.1-SNAPSHOT) -->
+        <version>1.21.5-R0.1-SNAPSHOT</version>
+        <scope>provided</scope>
+    </dependency>
+
+    <!-- SnakeYAML (Bukkit/Spigot/Paper에 이미 포함되어 있지만 명시적으로 추가 가능) -->
+    <!-- <dependency>
+        <groupId>org.yaml</groupId>
+        <artifactId>snakeyaml</artifactId>
+        <version>2.0</version> <!- 최신 버전 확인 ->
+        <scope>compile</scope> <!- 플러그인에 포함시킬 경우 compile ->
+    </dependency> -->
+    </dependencies>
+
+</project>

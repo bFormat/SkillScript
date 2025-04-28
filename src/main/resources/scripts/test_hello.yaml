@@ -1,0 +1,13 @@
+# Test Hello Script
+# Used with SkillScript plugin.
+
+OnCast:
+  - TargetBehaviour.SendMessage:
+      message: "&eHello from SkillScript!"
+
+  - TargetBehaviour.PlayEffect:
+      particle: VILLAGER_HAPPY
+      sound: ENTITY_EXPERIENCE_ORB_PICKUP
+
+  - TargetBehaviour.SendMessage:
+      message: "&7Test skill cast finished."
