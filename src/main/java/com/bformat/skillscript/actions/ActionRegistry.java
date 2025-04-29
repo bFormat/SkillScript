@@ -97,6 +97,7 @@ public class ActionRegistry {
         register("variable.getdirection", new GetDirectionAction());   // 새 액션 등록
         register("variable.getoffsetlocation", new GetOffsetLocationAction()); // 새 액션 등록
         register("variable.calculate", new CalculateVariableAction());
+        register("variable.vectormath", new VectorMathAction());
 
         plugin.getLogger().info("Core actions registered.");
     }

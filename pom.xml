@@ -37,8 +37,6 @@
         <artifactId>MathParser.org-mXparser</artifactId>
         <version>5.0.7</version> <!-- 최신 버전 확인 권장 -->
     </dependency>
-
-
     <dependency>
         <groupId>org.mockbukkit.mockbukkit</groupId>
         <artifactId>mockbukkit-v1.21</artifactId> <!-- 사용하는 서버 버전에 맞춰 선택 (예: v1.18, v1.20 등) -->
@@ -66,5 +64,42 @@
         <scope>compile</scope> <!- 플러그인에 포함시킬 경우 compile ->
     </dependency> -->
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.5.1</version> <!-- 또는 최신 버전 -->
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <artifactSet>
+                                <includes>
+                                    <!-- 여기에 플러그인에 포함시킬 라이브러리를 명시합니다. -->
+                                    <include>org.mariuszgromada.math:MathParser.org-mXparser</include>
+                                </includes>
+                            </artifactSet>
+                            <relocations>
+                                <!-- 다른 플러그인과의 충돌 방지를 위해 패키지 경로를 변경합니다. -->
+                                <relocation>
+                                    <pattern>org.mariuszgromada.math.mxparser</pattern>
+                                    <!-- com.bformat.skillscript.libs 부분은 원하는 경로로 변경 가능 -->
+                                    <shadedPattern>com.bformat.skillscript.libs.mxparser</shadedPattern>
+                                </relocation>
+                                <!-- 다른 라이브러리를 추가했다면 여기에 relocation 설정을 추가 -->
+                            </relocations>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- 다른 플러그인들 (예: maven-compiler-plugin) -->
+        </plugins>
+    </build>
 
 </project>

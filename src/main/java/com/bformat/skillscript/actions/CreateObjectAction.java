@@ -35,7 +35,7 @@ public class CreateObjectAction implements Action {
 
         // Optional parameters
         Optional<String> objectIdOpt = getStringParameter(params, "objectId"); // Example: Optional ID
-        int lifespan = getIntParameter(params, "lifespan", -1); // Ticks or similar unit
+        int lifespan = getIntParameter(params, "lifespan", -1, context); // Ticks or similar unit
         Optional<Map<String, Object>> appearanceOpt = getMapParameter(params, "appearance"); // 변경 후
         Optional<Vector> initialVectorOpt = getVectorParameter(params, "initialVector", context);
         Optional<Map<String, Object>> shapeDefinitionOpt = getMapParameter(params, "shapeDefinition"); // 변경 후

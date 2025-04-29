@@ -18,7 +18,7 @@ public class GetDirectionAction implements Action {
 
         Optional<String> targetIdentifierOpt = getStringParameter(params, "target"); // 예: "@Caster", "@Target"
         Optional<String> variableNameOpt = getStringParameter(params, "variable");
-        boolean normalize = getBooleanParameter(params, "normalize", true); // 기본적으로 정규화
+        boolean normalize = getBooleanParameter(params, "normalize", true, context); // 기본적으로 정규화
 
         if (targetIdentifierOpt.isEmpty() || variableNameOpt.isEmpty()) {
             logger.warning(pluginPrefix + "GetDirectionAction: Missing 'target' or 'variable' parameter.");

@@ -38,21 +38,10 @@ public interface Action {
      * @param params  Parameters defined for this action instance.
      * @return An ExecutionStatus indicating the result.
      */
-    ExecutionStatus execute(ExecutionContext context, ExecutionState state, Map<String, Object> params); // 반환 타입 변경
+    ExecutionStatus execute(ExecutionContext context, ExecutionState state, Map<String, Object> params);
 
     // --- Parameter Parsing Helper Methods ---
 
-    /**
-     * Safely gets a parameter value and casts it to the desired type.
-     * WARNING: Does not work correctly for nested generic types like Map<String, Object> due to type erasure.
-     * Use specialized helpers like getMapParameter for those cases.
-     *
-     * @param params The parameter map for the action.
-     * @param key    The parameter key (case-sensitive).
-     * @param type   The desired Class type.
-     * @param <T>    The type of the parameter.
-     * @return An Optional containing the parameter value if found and of the correct type, otherwise Optional.empty().
-     */
     default <T> Optional<T> getParameter(Map<String, Object> params, String key, Class<T> type) {
         Object value = params.get(key);
         if (type.isInstance(value)) {
@@ -61,26 +50,11 @@ public interface Action {
         return Optional.empty();
     }
 
-    /**
-     * Gets a String parameter, returning a default value if not found or not easily convertible to String.
-     *
-     * @param params       The parameter map.
-     * @param key          The parameter key.
-     * @param defaultValue The default value to return if the key is missing or value isn't easily convertible.
-     * @return The parameter value as a String, or the default value.
-     */
     default String getStringParameter(Map<String, Object> params, String key, String defaultValue) {
         Object value = params.get(key);
         return value != null ? String.valueOf(value) : defaultValue;
     }
 
-    /**
-     * Gets a required String parameter.
-     *
-     * @param params The parameter map.
-     * @param key    The parameter key.
-     * @return An Optional containing the String value if found and non-null/non-blank, otherwise Optional.empty().
-     */
     default Optional<String> getStringParameter(Map<String, Object> params, String key) {
         Object value = params.get(key);
         if (value instanceof String && !((String) value).isBlank()) {
@@ -90,168 +64,200 @@ public interface Action {
     }
 
     /**
-     * Gets an Integer parameter, parsing from Number or String representations.
-     *
-     * @param params       The parameter map.
-     * @param key          The parameter key.
+     * Gets an Integer parameter, parsing from Number or String representations (including variables/keywords).
+     * @param params The parameter map.
+     * @param key The parameter key.
      * @param defaultValue The default value if parsing fails or key is missing.
+     * @param context The ExecutionContext for resolving variables/keywords in strings. <<< ADDED
      * @return The parameter value as an int, or the default value.
      */
-    default int getIntParameter(Map<String, Object> params, String key, int defaultValue) {
+    default int getIntParameter(Map<String, Object> params, String key, int defaultValue, ExecutionContext context) {
         Object value = params.get(key);
         if (value instanceof Number) {
             return ((Number) value).intValue();
         } else if (value instanceof String) {
+            String valueStr = (String) value;
+            // 1. 변수/키워드 해석 시도 (가장 중요!)
+            Optional<Double> resolved = context.resolveNumericValue(valueStr);
+            if (resolved.isPresent()) {
+                // 로그 추가: 변수 해석 성공 확인
+                System.out.println("[DEBUG getIntParameter] Resolved variable '" + valueStr + "' to: " + resolved.get());
+                return resolved.get().intValue();
+            }
+            // 2. 직접 파싱 시도
             try {
-                return Integer.parseInt((String) value);
-            } catch (NumberFormatException ignored) { /* Fall through to default */ }
+                int parsed = Integer.parseInt(valueStr);
+                // 로그 추가: 직접 파싱 성공 확인
+                System.out.println("[DEBUG getIntParameter] Parsed string '" + valueStr + "' to int: " + parsed);
+                return parsed;
+            } catch (NumberFormatException e) {
+                System.err.println("[SkillScript Action Helper] Could not parse int parameter '" + key + "' with value: " + valueStr + " - Neither a variable/keyword nor a direct integer.");
+            }
         }
+        // 로그 추가: 기본값 사용 확인
+        System.out.println("[DEBUG getIntParameter] Using default value " + defaultValue + " for key '" + key + "'");
         return defaultValue;
     }
 
     /**
-     * Gets a Double parameter, parsing from Number or String representations.
-     *
-     * @param params       The parameter map.
-     * @param key          The parameter key.
+     * Gets a Double parameter, parsing from Number or String representations (including variables/keywords).
+     * @param params The parameter map.
+     * @param key The parameter key.
      * @param defaultValue The default value if parsing fails or key is missing.
+     * @param context The ExecutionContext for resolving variables/keywords in strings. <<< ADDED
      * @return The parameter value as a double, or the default value.
      */
-    default double getDoubleParameter(Map<String, Object> params, String key, double defaultValue) {
+    default double getDoubleParameter(Map<String, Object> params, String key, double defaultValue, ExecutionContext context) { // <<< context 추가
         Object value = params.get(key);
         if (value instanceof Number) {
             return ((Number) value).doubleValue();
         } else if (value instanceof String) {
+            String valueStr = (String) value;
             try {
-                return Double.parseDouble((String) value);
-            } catch (NumberFormatException ignored) { /* Fall through to default */ }
+                // 1. 변수/키워드 해석 시도
+                Optional<Double> resolved = context.resolveNumericValue(valueStr);
+                if (resolved.isPresent()) {
+                    return resolved.get();
+                }
+                // 2. 직접 파싱 시도
+                return Double.parseDouble(valueStr);
+            } catch (NumberFormatException | NullPointerException e) {
+                System.err.println("[SkillScript Action Helper] Could not parse double parameter '" + key + "' with value: " + valueStr + " - " + e.getMessage());
+                /* Fall through */
+            }
         }
         return defaultValue;
     }
 
     /**
-     * Gets a Float parameter, parsing from Number or String representations.
-     *
-     * @param params       The parameter map.
-     * @param key          The parameter key.
+     * Gets a Float parameter, parsing from Number or String representations (including variables/keywords).
+     * @param params The parameter map.
+     * @param key The parameter key.
      * @param defaultValue The default value if parsing fails or key is missing.
+     * @param context The ExecutionContext for resolving variables/keywords in strings. <<< ADDED
      * @return The parameter value as a float, or the default value.
      */
-    default float getFloatParameter(Map<String, Object> params, String key, float defaultValue) {
+    default float getFloatParameter(Map<String, Object> params, String key, float defaultValue, ExecutionContext context) { // <<< context 추가
         Object value = params.get(key);
         if (value instanceof Number) {
             return ((Number) value).floatValue();
         } else if (value instanceof String) {
+            String valueStr = (String) value;
             try {
-                return Float.parseFloat((String) value);
-            } catch (NumberFormatException ignored) { /* Fall through to default */ }
+                // 1. 변수/키워드 해석 시도
+                Optional<Double> resolved = context.resolveNumericValue(valueStr);
+                if (resolved.isPresent()) {
+                    return resolved.get().floatValue(); // Double을 float로 변환
+                }
+                // 2. 직접 파싱 시도
+                return Float.parseFloat(valueStr);
+            } catch (NumberFormatException | NullPointerException e) {
+                System.err.println("[SkillScript Action Helper] Could not parse float parameter '" + key + "' with value: " + valueStr + " - " + e.getMessage());
+                /* Fall through */
+            }
         }
         return defaultValue;
     }
 
     /**
-     * Gets a Boolean parameter, accepting Boolean values or specific String representations ("true", "false").
-     *
-     * @param params       The parameter map.
-     * @param key          The parameter key.
+     * Gets a Boolean parameter, accepting Boolean values or specific String representations ("true", "false", or resolvable numeric variables/keywords).
+     * @param params The parameter map.
+     * @param key The parameter key.
      * @param defaultValue The default value if parsing fails or key is missing.
+     * @param context The ExecutionContext for resolving variables/keywords in strings. <<< ADDED
      * @return The parameter value as a boolean, or the default value.
      */
-    default boolean getBooleanParameter(Map<String, Object> params, String key, boolean defaultValue) {
-        return getParameter(params, key, Boolean.class) // Check for actual Boolean first
-                .orElseGet(() -> { // If not a Boolean object, try parsing String
-                    String stringValue = getStringParameter(params, key, null); // Get as String or null
-                    if (stringValue != null) {
-                        // Consider "1", "yes", "on" as true? Currently only "true" (case-insensitive)
-                        return Boolean.parseBoolean(stringValue);
-                    }
-                    return defaultValue; // Fallback to default if key missing or not parseable String
-                });
+    default boolean getBooleanParameter(Map<String, Object> params, String key, boolean defaultValue, ExecutionContext context) { // <<< context 추가
+        Object value = params.get(key);
+        if (value instanceof Boolean) {
+            return (Boolean) value; // 직접 Boolean 값
+        } else if (value instanceof String) {
+            String stringValue = (String) value;
+            // 1. 변수/키워드 해석 시도 (0 아니면 true)
+            Optional<Double> resolved = context.resolveNumericValue(stringValue);
+            if(resolved.isPresent()) {
+                return resolved.get() != 0.0;
+            }
+            // 2. "true"/"false" 문자열 직접 비교 (대소문자 무시)
+            if ("true".equalsIgnoreCase(stringValue)) return true;
+            if ("false".equalsIgnoreCase(stringValue)) return false;
+            // 그 외 문자열은 기본값으로 처리 (또는 에러 로깅)
+            System.err.println("[SkillScript Action Helper] Could not parse boolean parameter '" + key + "' with value: " + stringValue);
+        }
+        // Boolean/String 아니거나 파싱 실패 시 기본값
+        return defaultValue;
     }
 
-    /**
-     * 파라미터에서 Location 값을 해석하여 가져옵니다.
-     * 값은 Location 객체, 변수명 문자열, 또는 "@CasterLocation" 같은 특수 키워드일 수 있습니다.
-     *
-     * @param params  액션 파라미터 맵.
-     * @param key     Location 값을 가진 파라미터 키.
-     * @param context 실행 컨텍스트 (변수 및 키워드 해석용).
-     * @return 해석된 Location을 담은 Optional, 실패 시 Optional.empty(). (Location은 안전을 위해 복제됨)
-     */
+    // --- Location/Vector/Entity Helpers (이전 버전 - context 해석 사용) ---
     default Optional<Location> getLocationParameter(Map<String, Object> params, String key, ExecutionContext context) {
         Object value = params.get(key);
         if (value instanceof Location) {
             return Optional.of(((Location) value).clone());
-        } else if (value instanceof Entity) { // 엔티티가 직접 값으로 들어온 경우
+        } else if (value instanceof Entity) {
             return Optional.of(((Entity)value).getLocation().clone());
         } else if (value instanceof String) {
-            // 변수명 또는 @키워드 해석 시도
-            return context.resolveLocation((String) value);
+            return context.resolveLocation((String) value); // 문자열이면 context에 위임
         }
-        // TODO: Map {world, x, y, z} 형태 파싱 추가?
+        // System.err.println("[SkillScript Action Helper] Could not resolve Location parameter '" + key + "'. Unsupported type: " + (value != null ? value.getClass().getName() : "null") + ", value: " + value);
         return Optional.empty();
     }
 
-    /**
-     * 파라미터에서 Vector 값을 해석하여 가져옵니다.
-     * 값은 Vector 객체, 변수명 문자열, 또는 "@CastDirection" 같은 특수 키워드일 수 있습니다.
-     * List [x, y, z] 또는 Map {x, y, z} 형태도 지원합니다.
-     *
-     * @param params  액션 파라미터 맵.
-     * @param key     Vector 값을 가진 파라미터 키.
-     * @param context 실행 컨텍스트 (변수 및 키워드 해석용).
-     * @return 해석된 Vector를 담은 Optional, 실패 시 Optional.empty(). (Vector는 안전을 위해 복제됨)
-     */
     @SuppressWarnings("unchecked")
     default Optional<Vector> getVectorParameter(Map<String, Object> params, String key, ExecutionContext context) {
         Object value = params.get(key);
         if (value instanceof Vector) {
             return Optional.of(((Vector) value).clone());
         } else if (value instanceof String) {
-            // 변수명 또는 @키워드 해석 시도
-            return context.resolveVector((String) value);
-        } else if (value instanceof Map) { // Map {x,y,z} 형태 파싱
+            return context.resolveVector((String) value); // 문자열이면 context에 위임
+        } else if (value instanceof Map) {
             Map<String, Object> map = castToMapSo(value);
             if (map != null) {
                 try {
-                    double x = getNumberFromMap(map, "x", 0.0).doubleValue();
-                    double y = getNumberFromMap(map, "y", 0.0).doubleValue();
-                    double z = getNumberFromMap(map, "z", 0.0).doubleValue();
+                    double x = resolveDoubleFromObject(map.get("x"), context, 0.0);
+                    double y = resolveDoubleFromObject(map.get("y"), context, 0.0);
+                    double z = resolveDoubleFromObject(map.get("z"), context, 0.0);
                     return Optional.of(new Vector(x, y, z));
-                } catch (ClassCastException | NullPointerException e) { /* Fall through */ }
+                } catch (ClassCastException | NullPointerException e) { /* Logged in resolveDouble */ }
             }
-        } else if (value instanceof List) { // List [x,y,z] 형태 파싱
+        } else if (value instanceof List) {
             List<?> list = (List<?>) value;
             if (list.size() == 3) {
                 try {
-                    double x = ((Number) list.get(0)).doubleValue();
-                    double y = ((Number) list.get(1)).doubleValue();
-                    double z = ((Number) list.get(2)).doubleValue();
+                    double x = resolveDoubleFromObject(list.get(0), context, 0.0);
+                    double y = resolveDoubleFromObject(list.get(1), context, 0.0);
+                    double z = resolveDoubleFromObject(list.get(2), context, 0.0);
                     return Optional.of(new Vector(x, y, z));
-                } catch (ClassCastException | IndexOutOfBoundsException | NullPointerException e) { /* Fall through */ }
+                } catch (IndexOutOfBoundsException | NullPointerException e) { /* Logged in resolveDouble */ }
             }
         }
+        // <<< 불필요한 오류 로그 제거 (정상적으로 null/기본값 처리되므로) >>>
+        // System.err.println("[SkillScript Action Helper] Could not resolve Vector parameter '" + key + "'. Unsupported type: " + (value != null ? value.getClass().getName() : "null") + ", value: " + value);
         return Optional.empty();
     }
 
-    /**
-     * 파라미터에서 Entity 값을 해석하여 가져옵니다.
-     * 값은 Entity 객체, 변수명 문자열, 또는 "@Caster" 같은 특수 키워드일 수 있습니다.
-     *
-     * @param params  액션 파라미터 맵.
-     * @param key     Entity 값을 가진 파라미터 키.
-     * @param context 실행 컨텍스트 (변수 및 키워드 해석용).
-     * @return 해석된 Entity를 담은 Optional, 실패 시 Optional.empty().
-     */
+    private double resolveDoubleFromObject(Object obj, ExecutionContext context, double defaultValue) {
+        if (obj instanceof Number) {
+            return ((Number) obj).doubleValue();
+        } else if (obj instanceof String) {
+            Optional<Double> resolved = context.resolveNumericValue((String) obj);
+            if (resolved.isPresent()) return resolved.get();
+            else {
+                try { return Double.parseDouble((String) obj); }
+                catch (NumberFormatException e) { /* Fall through */ }
+            }
+        }
+        // System.err.println("[SkillScript Action Helper] Could not resolve object to double: " + obj); // Optional log
+        return defaultValue;
+    }
+
     default Optional<Entity> getEntityParameter(Map<String, Object> params, String key, ExecutionContext context) {
         Object value = params.get(key);
         if (value instanceof Entity) {
             return Optional.of((Entity) value);
         } else if (value instanceof String) {
-            // 변수명 또는 @키워드 해석 시도
-            return context.resolveEntity((String) value);
+            return context.resolveEntity((String) value); // 문자열이면 context에 위임
         }
-        // TODO: UUID 문자열 파싱 추가? context.resolveEntity 에서 처리 가능
+        // System.err.println("[SkillScript Action Helper] Could not resolve Entity parameter '" + key + "'. Unsupported type: " + (value != null ? value.getClass().getName() : "null") + ", value: " + value);
         return Optional.empty();
     }
 

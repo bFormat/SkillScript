@@ -39,7 +39,7 @@ public class DamageAction implements Action {
 
         // --- 피해량 파싱 ---
         // Use getDoubleParameter, ensure it's positive
-        double amount = getDoubleParameter(params, "amount", -1.0);
+        double amount = getDoubleParameter(params, "amount", -1.0, context);
         if (amount <= 0) {
             logger.warning(pluginPrefix + "DamageAction: Invalid or missing 'amount' parameter (must be > 0). Value was: " + params.get("amount"));
             return ExecutionStatus.ERROR("DamageAction: Invalid or missing 'amount' parameter (must be > 0). Value was: " + params.get("amount")); // State modification not needed
@@ -47,7 +47,7 @@ public class DamageAction implements Action {
 
         // --- 피해 속성 파싱 ---
         // Optional<String> damageTypeStr = getStringParameter(params, "type"); // Example: "FIRE", "MAGIC" - Bukkit DamageCause might be better
-        boolean ignoreArmor = getBooleanParameter(params, "ignoreArmor", false);
+        boolean ignoreArmor = getBooleanParameter(params, "ignoreArmor", false, context);
 
         // --- 피해 발생원 결정 ---
         Optional<Entity> damageSourceOpt = getEntityParameter(params, "source", context) // Try parsing "source" param
