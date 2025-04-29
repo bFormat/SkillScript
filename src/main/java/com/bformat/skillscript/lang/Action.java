@@ -2,6 +2,7 @@ package com.bformat.skillscript.lang;
 
 import com.bformat.skillscript.execution.ExecutionContext;
 import com.bformat.skillscript.execution.ExecutionState;
+import com.bformat.skillscript.execution.ExecutionStatus; // ExecutionStatus 임포트
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Entity;
@@ -29,14 +30,15 @@ public interface Action {
 
     /**
      * Executes the logic of this action.
-     * Implementations can read from the ExecutionContext (data) and modify the
-     * ExecutionState (flow control, e.g., setting delays).
+     * Implementations can read from the ExecutionContext and modify the ExecutionState.
+     * The return value indicates the outcome (completed, delayed, error).
      *
-     * @param context The current script execution context (data like caster, target, variables).
-     * @param state   The current script execution state (flow like current index, delay status).
-     * @param params  Parameters defined for this action instance in the script (YAML).
+     * @param context The current script execution context.
+     * @param state   The current script execution state.
+     * @param params  Parameters defined for this action instance.
+     * @return An ExecutionStatus indicating the result.
      */
-    void execute(ExecutionContext context, ExecutionState state, Map<String, Object> params);
+    ExecutionStatus execute(ExecutionContext context, ExecutionState state, Map<String, Object> params); // 반환 타입 변경
 
     // --- Parameter Parsing Helper Methods ---
 

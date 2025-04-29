@@ -2,6 +2,7 @@ package com.bformat.skillscript.actions;
 
 import com.bformat.skillscript.execution.ExecutionContext;
 import com.bformat.skillscript.execution.ExecutionState; // ExecutionState 임포트 추가
+import com.bformat.skillscript.execution.ExecutionStatus;
 import com.bformat.skillscript.lang.Action;
 import org.bukkit.Location;
 import org.bukkit.util.Vector;
@@ -15,7 +16,7 @@ import java.util.logging.Logger;
 public class CreateObjectAction implements Action {
 
     @Override
-    public void execute(ExecutionContext context, ExecutionState state, Map<String, Object> params) {
+    public ExecutionStatus execute(ExecutionContext context, ExecutionState state, Map<String, Object> params) {
         final Logger logger = context.getCaster().getServer().getLogger();
         final String pluginPrefix = "[SkillScript Action] ";
 
@@ -28,7 +29,7 @@ public class CreateObjectAction implements Action {
 
         if (initialLocationOpt.isEmpty()) {
             logger.severe(pluginPrefix + "CreateObjectAction: Missing or invalid 'initialLocation' and couldn't resolve from current target. Cannot create object.");
-            return; // State modification not needed for immediate failure
+            return ExecutionStatus.ERROR("CreateObjectAction: Missing or invalid 'initialLocation' and couldn't resolve from current target. Cannot create object."); // State modification not needed for immediate failure
         }
         Location initialLocation = initialLocationOpt.get();
 
@@ -67,6 +68,8 @@ public class CreateObjectAction implements Action {
 
         // This action currently completes immediately. No state modification needed.
         // If object creation involved delays or waiting, state.setDelay() might be used.
+
+        return ExecutionStatus.COMPLETED;
     }
 
     // Helper to process potential nested behaviours defined within the CreateObject parameters

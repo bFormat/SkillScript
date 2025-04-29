@@ -2,6 +2,7 @@ package com.bformat.skillscript.actions;
 
 import com.bformat.skillscript.execution.ExecutionContext;
 import com.bformat.skillscript.execution.ExecutionState; // ExecutionState 임포트 추가
+import com.bformat.skillscript.execution.ExecutionStatus;
 import com.bformat.skillscript.lang.Action;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender; // Allow sending to Console
@@ -15,7 +16,7 @@ import java.util.logging.Logger; // Logger 임포트 추가
 public class SendMessageAction implements Action {
 
     @Override
-    public void execute(ExecutionContext context, ExecutionState state, Map<String, Object> params) {
+    public ExecutionStatus execute(ExecutionContext context, ExecutionState state, Map<String, Object> params) {
         final Logger logger = context.getCaster().getServer().getLogger();
         final String pluginPrefix = "[SkillScript Action] ";
 
@@ -23,7 +24,7 @@ public class SendMessageAction implements Action {
         Optional<String> messageOpt = getStringParameter(params, "message");
         if (messageOpt.isEmpty()) {
             logger.warning(pluginPrefix + "SendMessageAction: Missing 'message' parameter.");
-            return;
+            return ExecutionStatus.ERROR("SendMessageAction: Missing 'message' parameter.");
         }
         String rawMessage = messageOpt.get(); // 원본 메시지 문자열
 
@@ -44,6 +45,8 @@ public class SendMessageAction implements Action {
         } else {
             logger.warning(pluginPrefix + "SendMessageAction: Could not determine a valid target to send the message to.");
         }
+
+        return ExecutionStatus.COMPLETED;
     }
 
 

@@ -2,6 +2,7 @@ package com.bformat.skillscript.actions;
 
 import com.bformat.skillscript.execution.ExecutionContext;
 import com.bformat.skillscript.execution.ExecutionState;
+import com.bformat.skillscript.execution.ExecutionStatus;
 import com.bformat.skillscript.lang.Action;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
@@ -13,7 +14,7 @@ import java.util.logging.Logger;
 
 public class GetLocationAction implements Action {
     @Override
-    public void execute(ExecutionContext context, ExecutionState state, Map<String, Object> params) {
+    public ExecutionStatus execute(ExecutionContext context, ExecutionState state, Map<String, Object> params) {
         final Logger logger = context.getCaster().getServer().getLogger();
         final String pluginPrefix = "[SkillScript Action] ";
 
@@ -22,7 +23,7 @@ public class GetLocationAction implements Action {
 
         if (targetIdentifierOpt.isEmpty() || variableNameOpt.isEmpty()) {
             logger.warning(pluginPrefix + "GetLocationAction: Missing 'target' or 'variable' parameter.");
-            return;
+            return ExecutionStatus.ERROR("GetLocationAction: Missing 'target' or 'variable' parameter.");
         }
 
         String targetIdentifier = targetIdentifierOpt.get();
@@ -46,5 +47,7 @@ public class GetLocationAction implements Action {
         } else {
             logger.warning(pluginPrefix + "GetLocationAction: Could not resolve location for target '" + targetIdentifier + "'.");
         }
+
+        return ExecutionStatus.COMPLETED;
     }
 }

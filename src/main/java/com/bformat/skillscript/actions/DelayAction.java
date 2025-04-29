@@ -1,43 +1,42 @@
-package com.bformat.skillscript.actions; // actions 패키지 아래에 생성
+package com.bformat.skillscript.actions;
 
 import com.bformat.skillscript.execution.ExecutionContext;
 import com.bformat.skillscript.execution.ExecutionState;
+import com.bformat.skillscript.execution.ExecutionStatus; // Import ExecutionStatus
 import com.bformat.skillscript.lang.Action;
 
 import java.util.Map;
-import java.util.logging.Logger; // Logger 임포트
+import java.util.logging.Logger;
 
 /**
- * ControlFlow.Delay 액션 구현체.
- * 스크립트 실행을 지정된 틱(tick) 동안 일시 중지합니다.
+ * Action to pause the execution of the current script branch (or the entire script
+ * if in a sequential block) for a specified number of server ticks.
  */
 public class DelayAction implements Action {
 
     @Override
-    public void execute(ExecutionContext context, ExecutionState state, Map<String, Object> params) {
-        final Logger logger = context.getCaster().getServer().getLogger(); // 로거 가져오기
-        final String pluginPrefix = "[SkillScript Action] ";
+    public ExecutionStatus execute(ExecutionContext context, ExecutionState state, Map<String, Object> params) {
+        final Logger logger = context.getCaster().getServer().getLogger();
+        final String pluginPrefix = "[SkillScript Action Delay] ";
 
-        // "duration" 파라미터 파싱 (틱 단위)
-        // 파라미터가 없거나 유효하지 않으면 기본값 1틱 사용 및 경고 로깅
-        int durationTicks = getIntParameter(params, "duration", -1); // 기본값을 -1로 하여 누락 감지
+        // Get the duration parameter, expected in server ticks.
+        int durationTicks = getIntParameter(params, "duration", -1);
 
+        // Validate the duration.
         if (durationTicks < 0) {
-            logger.warning(pluginPrefix + "DelayAction: Missing or invalid 'duration' parameter (must be a non-negative integer). Defaulting to 1 tick.");
-            durationTicks = 1; // 잘못된 값이면 1틱으로 설정
-        } else if (durationTicks == 0) {
-            logger.fine(pluginPrefix + "DelayAction: Duration is 0, no delay will occur.");
-            // duration이 0이면 setDelay(-1)을 호출하게 되므로 사실상 지연 없음
+            logger.warning(pluginPrefix + "Missing or invalid 'duration' parameter (must be a non-negative integer representing ticks). Defaulting to 0 ticks (no delay).");
+            durationTicks = 0; // Treat invalid duration as no delay.
         }
 
-
-        logger.fine(pluginPrefix + "DelayAction: Setting delay for " + durationTicks + " ticks.");
-
-        // ExecutionState에 지연 설정 요청
-        state.setDelay(durationTicks);
-
-        // DelayAction 자체는 즉시 완료됩니다. 실제 대기는 ScriptTask의 tick() 메소드에서 처리합니다.
+        // Return the appropriate ExecutionStatus.
+        if (durationTicks > 0) {
+            // logger.info(pluginPrefix + "Requesting delay for " + durationTicks + " ticks.");
+            // Return DELAY status. ScriptTask will handle pausing based on this.
+            return ExecutionStatus.DELAY(durationTicks); // Use factory method
+        } else {
+            // logger.finest(pluginPrefix + "Duration is 0, executing immediately (COMPLETED).");
+            // 0-tick delay means the action completes immediately.
+            return ExecutionStatus.COMPLETED;
+        }
     }
-
-    // getIntParameter는 Action 인터페이스에서 상속받아 사용
 }

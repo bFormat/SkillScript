@@ -2,6 +2,7 @@ package com.bformat.skillscript.actions;
 
 import com.bformat.skillscript.execution.ExecutionContext;
 import com.bformat.skillscript.execution.ExecutionState; // ExecutionState 임포트 추가
+import com.bformat.skillscript.execution.ExecutionStatus;
 import com.bformat.skillscript.lang.Action;
 import org.bukkit.entity.Damageable;
 import org.bukkit.entity.Entity;
@@ -15,7 +16,7 @@ import java.util.logging.Logger;
 public class DamageAction implements Action {
 
     @Override
-    public void execute(ExecutionContext context, ExecutionState state, Map<String, Object> params) {
+    public ExecutionStatus execute(ExecutionContext context, ExecutionState state, Map<String, Object> params) {
         final Logger logger = context.getCaster().getServer().getLogger();
         final String pluginPrefix = "[SkillScript Action] ";
 
@@ -25,14 +26,14 @@ public class DamageAction implements Action {
 
         if (targetEntityOpt.isEmpty()) {
             logger.warning(pluginPrefix + "DamageAction: Could not determine a valid target entity.");
-            return; // State modification not needed
+            return ExecutionStatus.ERROR("DamageAction: Could not determine a valid target entity."); // State modification not needed
         }
 
         Entity targetEntity = targetEntityOpt.get();
 
         if (!(targetEntity instanceof Damageable)) {
             logger.fine(pluginPrefix + "DamageAction: Target is not Damageable: " + targetEntity.getType());
-            return; // State modification not needed
+            return ExecutionStatus.COMPLETED; // State modification not needed
         }
         Damageable damageableTarget = (Damageable) targetEntity;
 
@@ -41,7 +42,7 @@ public class DamageAction implements Action {
         double amount = getDoubleParameter(params, "amount", -1.0);
         if (amount <= 0) {
             logger.warning(pluginPrefix + "DamageAction: Invalid or missing 'amount' parameter (must be > 0). Value was: " + params.get("amount"));
-            return; // State modification not needed
+            return ExecutionStatus.ERROR("DamageAction: Invalid or missing 'amount' parameter (must be > 0). Value was: " + params.get("amount")); // State modification not needed
         }
 
         // --- 피해 속성 파싱 ---
@@ -73,6 +74,8 @@ public class DamageAction implements Action {
         }
 
         // This action completes immediately. No state modification needed.
+
+        return ExecutionStatus.COMPLETED;
     }
 
     // Helper methods like getDoubleParameter, getBooleanParameter, getEntityParameter are now in the Action interface

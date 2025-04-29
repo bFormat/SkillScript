@@ -2,6 +2,7 @@ package com.bformat.skillscript.actions;
 
 import com.bformat.skillscript.execution.ExecutionContext;
 import com.bformat.skillscript.execution.ExecutionState;
+import com.bformat.skillscript.execution.ExecutionStatus;
 import com.bformat.skillscript.lang.Action;
 import org.bukkit.Location;
 import org.bukkit.util.Vector;
@@ -12,7 +13,7 @@ import java.util.logging.Logger;
 
 public class GetOffsetLocationAction implements Action {
     @Override
-    public void execute(ExecutionContext context, ExecutionState state, Map<String, Object> params) {
+    public ExecutionStatus execute(ExecutionContext context, ExecutionState state, Map<String, Object> params) {
         final Logger logger = context.getCaster().getServer().getLogger();
         final String pluginPrefix = "[SkillScript Action] ";
 
@@ -23,7 +24,7 @@ public class GetOffsetLocationAction implements Action {
 
         if (baseLocationOpt.isEmpty() || offsetVectorOpt.isEmpty() || variableNameOpt.isEmpty()) {
             logger.warning(pluginPrefix + "GetOffsetLocationAction: Missing 'baseLocation', 'offset', or 'variable' parameter.");
-            return;
+            return ExecutionStatus.ERROR("GetOffsetLocationAction: Missing 'baseLocation', 'offset', or 'variable' parameter.");
         }
 
         Location baseLocation = baseLocationOpt.get(); // Optional에서 값 추출
@@ -36,5 +37,7 @@ public class GetOffsetLocationAction implements Action {
         // 결과 저장
         context.setVariable(variableName, offsetLocation); // 계산된 Location 저장 (이미 복제됨)
         logger.fine(pluginPrefix + "GetOffsetLocationAction: Calculated offset location and stored in variable '" + variableName + "'.");
+
+        return ExecutionStatus.COMPLETED;
     }
 }

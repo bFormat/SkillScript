@@ -1,6 +1,7 @@
 package com.bformat.skillscript.lang; // Action 인터페이스와 같은 패키지 또는 하위
 
 import com.bformat.skillscript.execution.ExecutionContext;
+import com.bformat.skillscript.execution.ExecutionStatus;
 import org.mockbukkit.mockbukkit.MockBukkit;
 import org.mockbukkit.mockbukkit.ServerMock;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
@@ -24,7 +25,11 @@ public class PlaceholderProcessingTest {
 
     // 테스트를 위해 Action 인터페이스를 구현하는 간단한 객체
     // default 메소드를 호출하기 위해 인스턴스가 필요합니다.
-    private final Action testActionInstance = (ctx, state, params) -> {}; // 람다로 간단히 구현
+    private final Action testActionInstance = (ctx, state, params) -> {
+        // 이 테스트에서는 Action의 실제 로직이 중요하지 않으므로,
+        // 항상 완료 상태를 반환하도록 합니다.
+        return ExecutionStatus.COMPLETED; // <--- 수정된 부분
+    };// 람다로 간단히 구현
 
     @BeforeEach
     public void setUp() {

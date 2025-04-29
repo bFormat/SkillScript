@@ -86,7 +86,9 @@ public class ActionRegistry {
 
         // 제어 흐름
         register("controlflow.delay", new DelayAction()); // DelayAction 구현 필요 (ExecutionState 사용)
-        register("controlflow.ifcondition", new IfConditionAction()); // IfConditionAction (중첩 실행 주의)
+        register("controlflow.ifcondition", new IfConditionAction()); // IfConditionAction
+        register("controlflow.forloop", new ForLoopAction()); // ForLoopAction 등록
+        register("controlflow.parallel", new ParallelAction()); // ParallelAction 등록
         // ... 다른 ControlFlow 액션들 ...
 
         // 변수/유틸리티

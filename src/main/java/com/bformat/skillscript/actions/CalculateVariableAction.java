@@ -6,6 +6,7 @@ import com.bformat.skillscript.lang.Action;
 import org.mariuszgromada.math.mxparser.Argument;
 import org.mariuszgromada.math.mxparser.Expression;
 import org.mariuszgromada.math.mxparser.mXparser;
+import com.bformat.skillscript.execution.ExecutionStatus;
 
 import java.util.*; // Import Collections, List, Map, ArrayList, HashMap, Comparator
 import java.util.logging.Level;
@@ -22,7 +23,7 @@ public class CalculateVariableAction implements Action {
     private static final String MXPARSER_ARG_PREFIX = "ss_";
 
     @Override
-    public void execute(ExecutionContext context, ExecutionState state, Map<String, Object> params) {
+    public ExecutionStatus execute(ExecutionContext context, ExecutionState state, Map<String, Object> params) {
         final Logger logger = context.getCaster().getServer().getLogger();
         final String pluginPrefix = "[SkillScript Action] ";
 
@@ -32,11 +33,11 @@ public class CalculateVariableAction implements Action {
 
         if (variableNameOpt.isEmpty()) {
             logger.warning(pluginPrefix + "CalculateVariableAction: Missing 'variable' parameter.");
-            return;
+            return ExecutionStatus.ERROR("CalculateVariableAction: Missing 'variable' parameter.");
         }
         if (expressionStringOpt.isEmpty()) {
             logger.warning(pluginPrefix + "CalculateVariableAction: Missing 'expression' parameter for variable '" + variableNameOpt.get() + "'.");
-            return;
+            return ExecutionStatus.ERROR("CalculateVariableAction: Missing 'expression' parameter for variable '" + variableNameOpt.get() + "'.");
         }
 
         String variableName = variableNameOpt.get();
@@ -108,7 +109,7 @@ public class CalculateVariableAction implements Action {
             }
         } catch (Exception e) {
             logger.log(Level.SEVERE, pluginPrefix + "CalculateVariableAction: Error during identifier processing for expression: " + originalExpression, e);
-            return;
+            return ExecutionStatus.ERROR("CalculateVariableAction: Error during identifier processing for expression: " + originalExpression);
         }
 
         // --- 표현식 문자열 치환 (가장 긴 식별자부터) ---
@@ -160,7 +161,7 @@ public class CalculateVariableAction implements Action {
             String errorMessage = expression.getErrorMessage();
             // 오류 메시지에 처리된 표현식을 보여주는 것이 디버깅에 더 유용
             logger.warning(pluginPrefix + "CalculateVariableAction: Syntax error in expression for variable '" + variableName + "': " + errorMessage + " (Processed Expression: " + processedExpression + ")");
-            return;
+            return ExecutionStatus.ERROR("CalculateVariableAction: Syntax error in expression for variable '" + variableName + "': " + errorMessage + " (Processed Expression: " + processedExpression + ")");
         }
 
         // 계산 실행
@@ -180,5 +181,7 @@ public class CalculateVariableAction implements Action {
             logger.fine(pluginPrefix + "CalculateVariableAction: Calculated result for '" + variableName + "' is: " + result);
             context.setVariable(variableName, result); // 계산된 결과(double)를 변수에 저장
         }
+
+        return ExecutionStatus.COMPLETED;
     }
 }

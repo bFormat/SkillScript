@@ -2,6 +2,7 @@ package com.bformat.skillscript.actions;
 
 import com.bformat.skillscript.execution.ExecutionContext;
 import com.bformat.skillscript.execution.ExecutionState;
+import com.bformat.skillscript.execution.ExecutionStatus;
 import com.bformat.skillscript.lang.Action;
 
 import java.util.Map;
@@ -11,7 +12,7 @@ import java.util.logging.Logger;
 public class SetVariableAction implements Action {
 
     @Override
-    public void execute(ExecutionContext context, ExecutionState state, Map<String, Object> params) {
+    public ExecutionStatus execute(ExecutionContext context, ExecutionState state, Map<String, Object> params) {
         final Logger logger = context.getCaster().getServer().getLogger();
         final String pluginPrefix = "[SkillScript Action] ";
 
@@ -21,7 +22,7 @@ public class SetVariableAction implements Action {
 
         if (variableNameOpt.isEmpty() || variableNameOpt.get().isBlank()) {
             logger.warning(pluginPrefix + "SetVariableAction: Missing or empty 'name' parameter.");
-            return; // State modification not needed
+            return ExecutionStatus.ERROR("SetVariableAction: Missing or empty 'name' parameter."); // State modification not needed
         }
         String variableName = variableNameOpt.get();
 
@@ -44,6 +45,7 @@ public class SetVariableAction implements Action {
         }
 
         // This action completes immediately. No state modification needed.
+        return ExecutionStatus.COMPLETED;
     }
 
     // getStringParameter helper is inherited from Action interface

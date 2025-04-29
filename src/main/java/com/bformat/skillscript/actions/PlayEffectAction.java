@@ -2,6 +2,7 @@ package com.bformat.skillscript.actions;
 
 import com.bformat.skillscript.execution.ExecutionContext;
 import com.bformat.skillscript.execution.ExecutionState;
+import com.bformat.skillscript.execution.ExecutionStatus;
 import com.bformat.skillscript.lang.Action;
 import org.bukkit.*;
 import org.bukkit.inventory.ItemStack;
@@ -16,7 +17,7 @@ import java.util.logging.Logger;
 public class PlayEffectAction implements Action {
 
     @Override
-    public void execute(ExecutionContext context, ExecutionState state, Map<String, Object> params) {
+    public ExecutionStatus execute(ExecutionContext context, ExecutionState state, Map<String, Object> params) {
         final Logger logger = context.getCaster().getServer().getLogger();
         final String pluginPrefix = "[SkillScript Action] ";
 
@@ -25,7 +26,7 @@ public class PlayEffectAction implements Action {
         Optional<Location> baseLocationOpt = getLocationParameter(params, "location", context);
         if (baseLocationOpt.isEmpty()) {
             logger.warning(pluginPrefix + "PlayEffectAction: Missing or invalid 'location' parameter. Use a variable name or keywords like '@CasterLocation', '@TargetLocation'.");
-            return;
+            return ExecutionStatus.ERROR("PlayEffectAction: Missing or invalid 'location' parameter. Use a variable name or keywords like '@CasterLocation', '@TargetLocation'.");
         }
         Location baseLocation = baseLocationOpt.get(); // 헬퍼가 이미 clone 처리
 
@@ -41,7 +42,7 @@ public class PlayEffectAction implements Action {
         World world = finalEffectLocation.getWorld();
         if (world == null) {
             logger.warning(pluginPrefix + "PlayEffectAction: World is null for the final effect location.");
-            return;
+            return ExecutionStatus.ERROR("PlayEffectAction: World is null for the final effect location.");
         }
 
         // --- 4. 파티클 파싱 및 재생 (at finalEffectLocation) ---
@@ -125,5 +126,6 @@ public class PlayEffectAction implements Action {
                 logger.log(Level.SEVERE, pluginPrefix + "PlayEffectAction: Error processing sound " + soundName, e);
             }
         }
+        return ExecutionStatus.COMPLETED;
     }
 }
